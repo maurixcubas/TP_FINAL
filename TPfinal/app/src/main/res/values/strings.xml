@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">TPfinal</string>
+    <string name="app_logo">Logo de la aplicación</string>
+    <string name="email_hint">Introduce tu correo</string>
+    <string name="password_hint">Introduce tu contraseña</string>
+    <string name="login_button_text">Iniciar sesión</string>
+    <string name="register_text">¿No tienes cuenta? Regístrate aquí.</string>
+</resources>
