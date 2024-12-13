@@ -1,12 +1,13 @@
 package com.elidacaceres.tpfinal
+
+import LoginViewModel
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import com.elidacaceres.tpfinal.databinding.ActivityLoginBinding
+
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
@@ -17,38 +18,49 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Observa los cambios en el ViewModel
+        observeViewModel()
+
+        // Configura el botón de inicio de sesión
         binding.loginButton.setOnClickListener {
             val email = binding.emailEditText.text.toString()
             val password = binding.passwordEditText.text.toString()
-            loginViewModel.login(email, password)
+
+            if (email.isNotBlank() && password.isNotBlank()) {
+                loginViewModel.login(email, password) // Llama al método del ViewModel
+            } else {
+                Toast.makeText(this, "Por favor ingresa tu email y contraseña", Toast.LENGTH_SHORT).show()
+            }
         }
 
+        // Configura el botón para ir a la pantalla de registro (si tienes una)
         binding.registerTextView.setOnClickListener {
-            Toast.makeText(this, "Navigate to Register Screen", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Navegar a la pantalla de registro", Toast.LENGTH_SHORT).show()
+            // Navegar a la pantalla de registro si corresponde
         }
-
-        observeViewModel()
     }
 
     private fun observeViewModel() {
+        // Observa el resultado del inicio de sesión
         loginViewModel.loginResult.observe(this) { result ->
             if (result) {
-                Toast.makeText(this, "Login Successful!", Toast.LENGTH_SHORT).show()
-                // Navigate to next screen
+                Toast.makeText(this, "Inicio de sesión exitoso!", Toast.LENGTH_SHORT).show()
+                val intent = Intent(this, DashboardActivity::class.java) // Cambia por tu pantalla principal
+                startActivity(intent)
+                finish()
             } else {
-                Toast.makeText(this, "Login Failed. Check credentials.", Toast.LENGTH_SHORT).show()
+                val error = loginViewModel.errorMessage.value
+                if (!error.isNullOrEmpty()) {
+                    Toast.makeText(this, "Error de inicio de sesión: $error", Toast.LENGTH_SHORT).show()
+                }
             }
         }
-    }
-}
 
-class LoginViewModel : ViewModel() {
-
-    private val _loginResult = MutableLiveData<Boolean>()
-    val loginResult: LiveData<Boolean> get() = _loginResult
-
-    fun login(email: String, password: String) {
-        // Simple validation for demo purposes
-        _loginResult.value = email == "user@example.com" && password == "password123"
+        // Observa los mensajes de error generales
+        loginViewModel.errorMessage.observe(this) { message ->
+            if (!message.isNullOrEmpty()) {
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }

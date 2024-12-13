@@ -1,6 +1,7 @@
 package com.elidacaceres.tpfinal
 
 
+import LoginViewModel
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -10,12 +11,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.elidacaceres.tpfinal.ui.theme.TPfinalTheme
+import androidx.compose.runtime.livedata.observeAsState
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(viewModel: LoginViewModel = LoginViewModel()) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var loginResult by remember { mutableStateOf("") }
+
+    // Observa el estado del inicio de sesión desde el ViewModel
+    val loginResult by viewModel.loginResult.observeAsState(initial = false)
+    val errorMessage by viewModel.errorMessage.observeAsState(initial = "")
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -47,18 +52,20 @@ fun LoginScreen() {
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = {
-                        loginResult = if (email == "user@example.com" && password == "password123") {
-                            "Inicio de sesión exitoso"
-                        } else {
-                            "Inicio de sesión fallido"
-                        }
+                        // Llama a la función de login en el ViewModel
+                        viewModel.login(email, password)
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Iniciar Sesión")
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(text = loginResult, style = MaterialTheme.typography.bodyMedium)
+
+                // Muestra el resultado del inicio de sesión
+                when {
+                    loginResult -> Text("Inicio de sesión exitoso", style = MaterialTheme.typography.bodyMedium)
+                    errorMessage.isNotEmpty() -> Text("Error: $errorMessage", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+                }
             }
         }
     )

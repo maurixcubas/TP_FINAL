@@ -1,19 +1,20 @@
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, request, redirect, session, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
-
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.secret_key = "secret_key"
+CORS(app)
 
-
-
-#Configure SQL ALchemy
+# Configure SQL ALchemy
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-#Database Model
+# Database Model
+
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(50), nullable=False)  # Nombre
@@ -29,41 +30,45 @@ class User(db.Model):
         return check_password_hash(self.password_hash, password)
 
 
-#Routes 
+# Routes 
 @app.route('/')
 def home():
     if "username" in session:
         return "youre logged in"
     return "Hello to our APP please Log in"
 
-#Login
+# Login
+
+
 @app.route('/login', methods=['POST'])
 def login():
-    email = request.form['email']  # Cambia a email
-    password = request.form['password']
-    
+    data = request.get_json()  # Obtiene los datos enviados como JSON
+    email = data.get('email')  # Extrae el email del JSON
+    password = data.get('password')  # Extrae la contraseña del JSON
+
     # Busca al usuario por email
     user = User.query.filter_by(email=email).first()
     if user and user.check_password(password):
-        session['username'] = email  # Cambia a email para la sesión
-        return redirect(url_for('dashboard'))
+        return {"success": True, "message": "Login successful"}  # Responde con JSON
     else:
-        return redirect(url_for('home'))  # Manejo de login incorrecto
+        return {"success": False, "message": "Invalid credentials"}, 401
+
+# Register
 
 
-#Register
 @app.route('/register', methods=['POST'])
 def register():
-    first_name = request.form['first_name']
-    last_name = request.form['last_name']
-    email = request.form['email']
-    phone = request.form['phone']
-    password = request.form['password']
+    data = request.get_json()  # Obtiene los datos enviados como JSON
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    email = data.get('email')
+    phone = data.get('phone')
+    password = data.get('password')
 
     # Verifica si el usuario ya existe por email
     user = User.query.filter_by(email=email).first()
     if user:
-        return redirect(url_for('home'))  # Puedes agregar un mensaje de error aquí
+        return {"success": False, "message": "User already exists"}, 409
 
     # Crea un nuevo usuario
     new_user = User(
@@ -76,19 +81,19 @@ def register():
     db.session.add(new_user)
     db.session.commit()
 
-    session['username'] = email  # Guarda la sesión del usuario
-    return redirect(url_for('dashboard'))
+    return {"success": True, "message": "User registered successfully"}
 
 
+# Logout
 
-#Logout
+
 @app.route('/logout')
 def logout():
     session.pop('username', None)
     return redirect(url_for('home'))
 
 
-#dashboard
+# dashboard
 @app.route('/dashboard')
 def dashboard():
     if "username" in session:
@@ -97,8 +102,7 @@ def dashboard():
     return redirect(url_for('home'))
 
 
-
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
