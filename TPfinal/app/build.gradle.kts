@@ -69,6 +69,7 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata:1.5.1")
     implementation(libs.material)
     implementation(libs.androidx.activity)
+    implementation(libs.androidx.navigation.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
