@@ -15,8 +15,8 @@ import com.elidacaceres.tpfinal.ui.theme.TPfinalTheme
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = LoginViewModel(),
-    onNavigateToRegister: () -> Unit, // Callback para ir a registro
-    onNavigateToChat: () -> Unit      // Callback para ir al chat
+    onNavigateToRegister: () -> Unit,
+    onNavigateToChat: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
