@@ -3,6 +3,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.elidacaceres.tpfinal.LoginRequest
+import com.elidacaceres.tpfinal.RetrofitInstance
 import kotlinx.coroutines.launch
 
 class LoginViewModel : ViewModel() {

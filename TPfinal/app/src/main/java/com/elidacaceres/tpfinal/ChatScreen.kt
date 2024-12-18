@@ -1,99 +1,148 @@
-import androidx.compose.foundation.Image
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.elidacaceres.tpfinal.R
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.launch
+import com.elidacaceres.tpfinal.MessageRequest
+import com.elidacaceres.tpfinal.RetrofitInstance
 
-@OptIn(ExperimentalMaterial3Api::class) // Activar la API experimental
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(navController: NavController) {
+fun ChatScreen(navController: NavController, initialThreadId: String?) {
     var userMessage by remember { mutableStateOf(TextFieldValue("")) }
-    var messages by remember { mutableStateOf(listOf<Pair<String, Boolean>>()) } // true = User, false = Assistant
+    var messages by remember { mutableStateOf(listOf<Pair<String, String>>()) } // Pair(role, content)
+    var threadId by remember { mutableStateOf(initialThreadId) }
+    var isLoading by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Header con botón de retroceso
-        TopAppBar(
-            title = {
-                Text(
-                    text = "UAAbot",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
-            },
-            navigationIcon = {
-                IconButton(onClick = { navController.navigate("home") }) {
-                    Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFB71C1C)) // Color rojo oscuro
-        )
+    val coroutineScope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
 
-        // Fondo con marca de agua (logo)
-        Box(modifier = Modifier.fillMaxSize()) {
-            Image(
-                painter = painterResource(id = R.drawable.logo_2),
-                contentDescription = "Logo de la app",
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer(alpha = 0.1f) // Marca de agua con transparencia
-                    .align(Alignment.Center)
-            )
-
-            // Mostrar mensajes
-            Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        messages.forEach { (message, isUser) ->
-                            ChatBubble(message, isUser)
-                        }
+    // Cargar mensajes existentes si hay un threadId
+    LaunchedEffect(threadId) {
+        threadId?.let { id ->
+            coroutineScope.launch {
+                try {
+                    val response = RetrofitInstance.api.getMessages(id)
+                    if (response.isSuccessful) {
+                        messages = response.body()?.map { it.role to it.content } ?: emptyList()
                     }
-                }
-
-                // Input para escribir mensaje
-                Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                    BasicTextField(
-                        value = userMessage,
-                        onValueChange = { userMessage = it },
-                        modifier = Modifier
-                            .weight(1f)
-                            .background(Color.LightGray, shape = MaterialTheme.shapes.small)
-                            .padding(8.dp)
-                    )
-                    Button(
-                        onClick = {
-                            if (userMessage.text.isNotBlank()) {
-                                messages = messages + (userMessage.text to true) // Mensaje del usuario
-                                messages = messages + ("Mensaje de Asistente de prueba" to false) // Respuesta temporal
-                                userMessage = TextFieldValue("") // Limpiar input
-                            }
-                        },
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                    ) {
-                        Text("Enviar") // Texto rojo oscuro
-                    }
+                } catch (e: Exception) {
+                    println("Error al cargar mensajes: ${e.message}")
                 }
             }
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Chat", style = MaterialTheme.typography.headlineMedium) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigate("chat_options") }) {
+                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Atrás")
+                    }
+                }
+            )
+        },
+        bottomBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                BasicTextField(
+                    value = userMessage,
+                    onValueChange = { userMessage = it },
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(Color.LightGray)
+                        .padding(8.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(
+                    onClick = {
+                    val cleanMessage = userMessage.text.trim()
+                    if (cleanMessage.isNotEmpty()) {
+                        // Mostrar mensaje del usuario directamente
+                        messages = messages + ("user" to cleanMessage)
+
+                        coroutineScope.launch {
+                            isLoading = true
+                            try {
+                                // Si no hay threadId, crea uno nuevo
+                                if (threadId == null) {
+                                    val threadResponse = RetrofitInstance.api.createThread()
+                                    if (threadResponse.isSuccessful) {
+                                        threadId = threadResponse.body()?.thread_id
+                                    }
+                                }
+                                // Enviar mensaje
+                                threadId?.let { id ->
+                                    val request = MessageRequest(content = cleanMessage)
+                                    val response = RetrofitInstance.api.sendMessage(id, request)
+                                    if (response.isSuccessful) {
+                                        val reply = response.body()?.assistant_reply ?: "Sin respuesta"
+                                        messages = messages + ("assistant" to reply)
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                println("Error al enviar mensaje: ${e.message}")
+                            } finally {
+                                isLoading = false
+                            }
+                        }
+                        userMessage = TextFieldValue("") // Limpiar input
+                    }
+                },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF800000), // Color de fondo del botón
+                        contentColor = Color.White  // Color del texto
+                    )
+                ) {
+                    Text("Enviar")
+                }
+            }
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(scrollState)
+                .padding(16.dp)
+        ) {
+            messages.forEach { (role, content) ->
+                ChatBubble(content, role == "user")
+            }
+            if (isLoading) {
+                LoadingDotsAnimation()
+            }
+        }
+    }
+
+    // Scroll automático al final del chat
+    LaunchedEffect(messages) {
+        coroutineScope.launch {
+            scrollState.animateScrollTo(scrollState.maxValue)
         }
     }
 }
@@ -108,21 +157,45 @@ fun ChatBubble(message: String, isUser: Boolean) {
     ) {
         Text(
             text = message,
-            modifier = Modifier
-                .background(
-                    if (isUser) Color.Blue else Color.Gray,
-                    shape = MaterialTheme.shapes.medium
-                )
-                .padding(8.dp),
             color = Color.White,
-            textAlign = if (isUser) TextAlign.End else TextAlign.Start
+            modifier = Modifier
+                .background(if (isUser) Color.Blue else Color.Gray)
+                .padding(8.dp)
         )
     }
 }
 
+@Composable
+fun LoadingDotsAnimation() {
+    val dotState = rememberInfiniteTransition()
+    val dotOffset by dotState.animateFloat(
+        initialValue = 0f,
+        targetValue = 10f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        repeat(3) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .background(Color.Gray, shape = MaterialTheme.shapes.small)
+                    .padding(horizontal = dotOffset.dp)
+            )
+        }
+    }
+}
+
+
 @Preview(showBackground = true)
 @Composable
 fun PreviewChatScreen() {
-    // Usamos un NavController simulado para la vista previa
-    ChatScreen(navController = rememberNavController())
+    ChatScreen(navController = rememberNavController(), null)
 }

@@ -1,5 +1,6 @@
 package com.elidacaceres.tpfinal
 
+import ChatScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -41,18 +42,25 @@ class MainActivity : ComponentActivity() {
                     }
                     // Ruta para ChatOptionsScreen
                     composable("chat_options") {
-                        ChatOptionsScreen(
+                        HomeOptions(
                             onNavigateToCurrentChat = { navController.navigate("chat_screen") },
-                            onNavigateToPreviousChats = { navController.navigate("previous_chats") }
+                            onNavigateToPreviousChats = { navController.navigate("chat_history") }
                         )
                     }
                     // Ruta para PreviousChatsScreen (comentado si no lo usas)
                     // composable("previous_chats") {
                     //    PreviousChatsScreen { selectedChat -> println("Chat seleccionado: $selectedChat") }
                     // }
-                    // Ruta para ChatScreen
-                    composable("chat_screen") {
-                        ChatScreen() // Asegúrate de tener la pantalla de chat definida aquí
+
+                    composable("chat_history") {
+                        ChatHistoryScreen(navController)
+                    }
+                    composable("chat_screen") { // Caso nuevo chat
+                        ChatScreen(navController, null)
+                    }
+                    composable("chat_screen/{threadId}") { backStackEntry -> // Caso chat existente
+                        val threadId = backStackEntry.arguments?.getString("threadId")
+                        ChatScreen(navController, threadId)
                     }
                 }
             }

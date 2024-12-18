@@ -5,13 +5,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun Hompage(
+fun HomeOptions(
     onNavigateToCurrentChat: () -> Unit, // Navegar al nuevo chat
     onNavigateToPreviousChats: () -> Unit // Navegar a chats anteriores
 ) {
@@ -46,7 +47,12 @@ fun Hompage(
             onClick = onNavigateToCurrentChat, // Navega a la pantalla de nuevo chat
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 8.dp)
+                .padding(bottom = 8.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF800000), // Color de fondo del botón
+                contentColor = Color.White  // Color del texto
+            )
+
         ) {
             Text("Nuevo Chat")
         }
@@ -54,18 +60,13 @@ fun Hompage(
         // Botón para ver chats anteriores
         Button(
             onClick = onNavigateToPreviousChats, // Navega a la pantalla de chats anteriores
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF800000), // Color de fondo del botón
+                contentColor = Color.White  // Color del texto
+            )
         ) {
             Text("Ver Chats Anteriores")
         }
     }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun PreviewHomepage() {
-    Hompage(
-        onNavigateToCurrentChat = {},
-        onNavigateToPreviousChats = {}
-    )
 }

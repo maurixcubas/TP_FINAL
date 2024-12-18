@@ -1,12 +1,16 @@
 package com.elidacaceres.tpfinal
 
 import RegisterViewModel
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -33,6 +37,14 @@ fun RegistrationScreen(onNavigateToLogin: () -> Unit, viewModel: RegisterViewMod
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo_2), // Asegúrate que el nombre coincide con el recurso
+                    contentDescription = "Logo de la app",
+                    modifier = Modifier
+                        .size(120.dp) // Ajusta el tamaño del logo
+                        .padding(bottom = 16.dp),
+                    contentScale = ContentScale.Fit
+                )
                 RegistrationTextField(
                     value = firstName,
                     label = "Nombre",
@@ -79,7 +91,11 @@ fun RegistrationScreen(onNavigateToLogin: () -> Unit, viewModel: RegisterViewMod
                             password
                         )
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF800000), // Color de fondo del botón
+                        contentColor = Color.White  // Color del texto
+                    )
                 ) {
                     Text("Registrar")
                 }

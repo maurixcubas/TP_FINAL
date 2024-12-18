@@ -5,6 +5,7 @@ import com.elidacaceres.tpfinal.RegisterRequest
 import com.elidacaceres.tpfinal.RegisterResponse
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.elidacaceres.tpfinal.RetrofitInstance
 
 class RegisterViewModel : ViewModel() {
 
