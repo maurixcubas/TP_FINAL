@@ -15,7 +15,8 @@ import com.elidacaceres.tpfinal.ui.theme.TPfinalTheme
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = LoginViewModel(),
-    onNavigateToRegister: () -> Unit // Callback para navegación
+    onNavigateToRegister: () -> Unit, // Callback para ir a registro
+    onNavigateToChat: () -> Unit      // Callback para ir al chat
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -23,6 +24,13 @@ fun LoginScreen(
     // Observa el estado del inicio de sesión desde el ViewModel
     val loginResult by viewModel.loginResult.observeAsState(initial = false)
     val errorMessage by viewModel.errorMessage.observeAsState(initial = "")
+
+    // Detecta si el login fue exitoso y navega al ChatScreen
+    LaunchedEffect(loginResult) {
+        if (loginResult) {
+            onNavigateToChat()
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -61,15 +69,12 @@ fun LoginScreen(
                     Text("Iniciar Sesión")
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                // Botón de navegación
                 TextButton(onClick = onNavigateToRegister) {
                     Text("¿No tienes cuenta? Regístrate aquí")
                 }
-
                 Spacer(modifier = Modifier.height(16.dp))
-                when {
-                    loginResult -> Text("Inicio de sesión exitoso", style = MaterialTheme.typography.bodyMedium)
-                    errorMessage.isNotEmpty() -> Text(
+                if (errorMessage.isNotEmpty()) {
+                    Text(
                         "Error: $errorMessage",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error
@@ -84,6 +89,9 @@ fun LoginScreen(
 @Composable
 fun LoginScreenPreview() {
     TPfinalTheme {
-        LoginScreen(onNavigateToRegister = { /* Acción de navegación aquí */ })
+        LoginScreen(
+            onNavigateToRegister = {},
+            onNavigateToChat = {}
+        )
     }
 }

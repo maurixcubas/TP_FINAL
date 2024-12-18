@@ -8,9 +8,9 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.elidacaceres.tpfinal.ui.theme.TPfinalTheme
 
 @Composable
 fun RegistrationScreen(onNavigateToLogin: () -> Unit, viewModel: RegisterViewModel = viewModel()) {
@@ -20,7 +20,7 @@ fun RegistrationScreen(onNavigateToLogin: () -> Unit, viewModel: RegisterViewMod
     var phoneNumber by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    val registrationResult by viewModel.registrationResult.observeAsState(initial = "")
+    val registrationState by viewModel.registrationState.observeAsState(RegistrationState.Idle)
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -33,70 +33,97 @@ fun RegistrationScreen(onNavigateToLogin: () -> Unit, viewModel: RegisterViewMod
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Registro",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
+                RegistrationTextField(
                     value = firstName,
-                    onValueChange = { firstName = it },
-                    label = { Text("Nombre") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Nombre",
+                    onValueChange = { firstName = it }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+
+                RegistrationTextField(
                     value = lastName,
-                    onValueChange = { lastName = it },
-                    label = { Text("Apellido") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Apellido",
+                    onValueChange = { lastName = it }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+
+                RegistrationTextField(
                     value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Correo electrónico") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Correo Electrónico",
+                    onValueChange = { email = it }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+
+                RegistrationTextField(
                     value = phoneNumber,
-                    onValueChange = { phoneNumber = it },
-                    label = { Text("Número Celular") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Número Celular",
+                    onValueChange = { phoneNumber = it }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+
+                RegistrationTextField(
                     value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Contraseña") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Contraseña",
+                    isPassword = true,
+                    onValueChange = { password = it }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
+
                 Button(
                     onClick = {
-                        viewModel.registerUser(firstName, lastName, email, phoneNumber, password)
+                        viewModel.registerUser(
+                            firstName,
+                            lastName,
+                            email,
+                            phoneNumber,
+                            password
+                        )
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Registrar")
                 }
+
                 Spacer(modifier = Modifier.height(8.dp))
                 TextButton(onClick = onNavigateToLogin) {
                     Text("¿Ya tienes cuenta? Inicia sesión aquí")
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Mostrar el resultado del registro
-                if (registrationResult.isNotEmpty()) {
-                    Text(
-                        text = registrationResult,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (registrationResult == "Registro exitoso") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                    )
+                // Mostrar estados de registro
+                when (registrationState) {
+                    is RegistrationState.Loading -> CircularProgressIndicator()
+                    is RegistrationState.Success -> {
+                        Text(
+                            text = (registrationState as RegistrationState.Success).message,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    is RegistrationState.Error -> {
+                        Text(
+                            text = (registrationState as RegistrationState.Error).errorMessage,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    else -> {}
                 }
             }
         }
+    )
+}
+
+@Composable
+fun RegistrationTextField(
+    value: String,
+    label: String,
+    onValueChange: (String) -> Unit,
+    isPassword: Boolean = false  // Corregido a Boolean
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+        modifier = Modifier.fillMaxWidth()
     )
 }
