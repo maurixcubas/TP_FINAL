@@ -29,7 +29,8 @@ class MainActivity : ComponentActivity() {
                     // Pantalla de inicio de sesión
                     composable("login") {
                         LoginScreen(
-                            onNavigateToRegister = { navController.navigate("registration") }
+                            onNavigateToRegister = { navController.navigate("registration") },
+                            onNavigateToChat = { navController.navigate("chat") } // Navega al chat
                         )
                     }
                     // Pantalla de registro
