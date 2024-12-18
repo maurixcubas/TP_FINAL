@@ -20,28 +20,39 @@ class MainActivity : ComponentActivity() {
 
                 // Configurar el NavHost
                 NavHost(navController = navController, startDestination = "welcome") {
-                    // Pantalla de bienvenida
+                    // Ruta para WelcomeScreen
                     composable("welcome") {
                         WelcomeScreen(
                             onStartClick = { navController.navigate("login") }
                         )
                     }
-                    // Pantalla de inicio de sesión
+                    // Ruta para LoginScreen
                     composable("login") {
                         LoginScreen(
                             onNavigateToRegister = { navController.navigate("registration") },
-                            onNavigateToChat = { navController.navigate("chat") } // Navega al chat
+                            onNavigateToChat = { navController.navigate("chat_options") }
                         )
                     }
-                    // Pantalla de registro
+                    // Ruta para RegistrationScreen
                     composable("registration") {
                         RegistrationScreen(
                             onNavigateToLogin = { navController.navigate("login") }
                         )
                     }
-                    // Pantalla de chat
-                    composable("chat") {
-                        ChatScreen()
+                    // Ruta para ChatOptionsScreen
+                    composable("chat_options") {
+                        ChatOptionsScreen(
+                            onNavigateToCurrentChat = { navController.navigate("chat_screen") },
+                            onNavigateToPreviousChats = { navController.navigate("previous_chats") }
+                        )
+                    }
+                    // Ruta para PreviousChatsScreen (comentado si no lo usas)
+                    // composable("previous_chats") {
+                    //    PreviousChatsScreen { selectedChat -> println("Chat seleccionado: $selectedChat") }
+                    // }
+                    // Ruta para ChatScreen
+                    composable("chat_screen") {
+                        ChatScreen() // Asegúrate de tener la pantalla de chat definida aquí
                     }
                 }
             }
