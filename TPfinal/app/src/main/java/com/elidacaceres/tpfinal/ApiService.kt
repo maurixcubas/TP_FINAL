@@ -1,6 +1,6 @@
 package com.elidacaceres.tpfinal
 
-import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 
@@ -20,10 +20,10 @@ data class RegisterResponse(val success: Boolean, val message: String)
 
 interface ApiService {
     // Ruta para login
-    @POST("/login")
-    fun login(@Body request: LoginRequest): Call<LoginResponse>
+    @POST("/auth/login")
+    suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
     // Ruta para registro
-    @POST("/register")
-    fun register(@Body request: RegisterRequest): Call<RegisterResponse>
+    @POST("/auth/register")
+    suspend fun register(@Body request: RegisterRequest): Response<RegisterResponse>
 }

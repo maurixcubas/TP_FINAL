@@ -1,11 +1,9 @@
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.elidacaceres.tpfinal.LoginRequest
-import com.elidacaceres.tpfinal.LoginResponse
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import kotlinx.coroutines.launch
 
 class LoginViewModel : ViewModel() {
 
@@ -17,8 +15,11 @@ class LoginViewModel : ViewModel() {
 
     fun login(email: String, password: String) {
         val loginRequest = LoginRequest(email, password)
-        RetrofitInstance.api.login(loginRequest).enqueue(object : Callback<LoginResponse> {
-            override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
+
+        // Ejecuta la llamada dentro de una corutina
+        viewModelScope.launch {
+            try {
+                val response = RetrofitInstance.api.login(loginRequest)
                 if (response.isSuccessful) {
                     val body = response.body()
                     if (body?.success == true) {
@@ -31,11 +32,11 @@ class LoginViewModel : ViewModel() {
                     _loginResult.value = false
                     _errorMessage.value = "Error del servidor: ${response.code()}"
                 }
-            }
-            override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+            } catch (e: Exception) {
+                // Captura errores de red o excepciones
                 _loginResult.value = false
-                _errorMessage.value = "Error de red: ${t.message}"
+                _errorMessage.value = "Error de red: ${e.message}"
             }
-        })
+        }
     }
 }
